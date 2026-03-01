@@ -2,11 +2,7 @@
 
 > **Plataforma de geolocalização para cidadania ativa e monitoramento urbano.**
 
-[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
-
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
 O **Geo Reporting Platform** é uma interface moderna desenvolvida para conectar cidadãos à gestão pública. Através de um mapa interativo, usuários podem reportar incidentes, buracos, falta de iluminação ou problemas de saneamento, facilitando a visualização crítica dos pontos que necessitam de intervenção imediata da prefeitura.
 
 ---
@@ -64,3 +60,4 @@ src/
  ├── pages/        # Telas da Aplicação (Home, Dashboard, Report)
  ├── services/     # Integração com APIs externas
  └── styles/       # Configurações globais de tema
+

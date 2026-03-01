@@ -34,7 +34,7 @@ O projeto é 100% desenvolvido em **TypeScript**, utilizando interfaces rigorosa
 ## 3. Demonstração Visual
 
 <p align="center">
-  <img src="https://pin.it/6EhZlYfJc">
+  <img src="https://github.com/matheussousadata/geo-reporting-platform/blob/main/assets/tela.png">
 </p>
 
 ---
@@ -78,3 +78,4 @@ npm run dev
 ```
 
 Matheus Sousa Frontend developer & AI engineering
+

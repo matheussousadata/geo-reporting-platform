@@ -76,25 +76,38 @@ export function ReportModal({
   const titleValue = watch("title")
   const descValue = watch("description")
 
-  const onSubmit = (data: ReportFormData) => {
+  const onSubmit = async (data: ReportFormData) => {
     if (!coordinates) return
 
-    const result = addReport(
-      {
-        title: data.title,
-        description: data.description,
-        category: data.category as ReportCategory,
-      },
-      coordinates.lat,
-      coordinates.lng
-    )
+    const { lat, lng } = coordinates
 
-    if (result.success) {
+    const apiPost = process.env.NEXT_PUBLIC_API_POST
+    if (!apiPost) {
+      throw new Error("API_POST não definida")
+    }
+
+    try {
+      const res = await fetch(apiPost, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tipo: data.category,
+          descricao: data.description,
+          latitude: lat,
+          longitude: lng,
+          imagem: [],
+          status: "novo",
+        }),
+      })
+
+      const result = await res.json()
+      alert(result.message ?? 'Denúncia enviada!')
+
+      handleClose(false)
       reset()
-      onOpenChange(false)
-      onSuccess()
-    } else {
-      onError(result.error || "Erro ao criar denuncia.")
+    } catch (err) {
+      alert('Erro ao enviar denúncia')
+      console.error(err)
     }
   }
 
@@ -105,7 +118,7 @@ export function ReportModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[480px] bg-card text-card-foreground border-border/50">
+      <DialogContent className="sm:max-w-480px bg-card text-card-foreground border-border/50">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Nova Denuncia</DialogTitle>
           <DialogDescription>

@@ -6,28 +6,13 @@ import "mapbox-gl/dist/mapbox-gl.css"
 import { useReports } from "@/contexts/reports-context"
 import { CATEGORIES } from "@/types/report"
 import type { Report } from "@/types/report"
-import {
-  CITY_BOUNDS,
-  CITY_CENTER,
-  DEFAULT_ZOOM,
-  MAP_STYLE_SATELLITE,
-  MAP_STYLE_TERRAIN,
-} from "@/utils/constants"
+import { CITY_BOUNDS, CITY_CENTER, DEFAULT_ZOOM, MAP_STYLE_SATELLITE, MAP_STYLE_TERRAIN } from "@/utils/constants"
 import { isInsideBounds } from "@/utils/geo"
 import { SearchBar } from "@/components/search-bar"
 import { ReportModal } from "@/components/report-modal"
 import { ReportCard } from "@/components/report-card"
 import { ReportsPanel } from "@/components/reports-panel"
-import {
-  Navigation,
-  Plus,
-  AlertTriangle,
-  X,
-  MapPin,
-  Satellite,
-  Mountain,
-  List,
-} from "lucide-react"
+import { Navigation, Plus, AlertTriangle, X, MapPin, Satellite, Mountain, List } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 function createPinSvg(color: string): string {
@@ -126,13 +111,15 @@ function applyStyleExtras(map: mapboxgl.Map, satellite: boolean) {
   }
 }
 
+
 export function MapContainer() {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map())
   const ignoreNextClick = useRef(false)
 
-  const { reports } = useReports()
+  const { reports: hookReports } = useReports()
+  const [reports, setReports] = useState<Report[]>(hookReports)
 
   const [modalOpen, setModalOpen] = useState(false)
   const [clickCoords, setClickCoords] = useState<{ lat: number; lng: number } | null>(null)
@@ -272,35 +259,40 @@ export function MapContainer() {
 
       const cat = CATEGORIES[report.category]
 
-      const el = document.createElement("div")
-      el.className = "report-marker"
-      el.style.width = "30px"
-      el.style.height = "40px"
-      el.style.cursor = "pointer"
-      el.innerHTML = createPinSvg(cat.color)
+      if (!cat) {
+        console.warn("Categoria inválida:", report.category)
+      }
 
-      el.addEventListener("mouseenter", () => {
-        el.style.filter = "brightness(1.25) drop-shadow(0 0 6px rgba(255,255,255,0.35))"
-        el.style.transition = "filter 0.2s ease"
-      })
-      el.addEventListener("mouseleave", () => {
-        el.style.filter = "none"
-      })
+      reports.forEach(report => {
+        const el = document.createElement("div")
+        el.className = "report-marker"
+        el.style.width = "30px"
+        el.style.height = "40px"
+        el.style.cursor = "pointer"
+        el.innerHTML = createPinSvg(cat.color)
 
-      el.addEventListener("click", (e) => {
-        e.stopPropagation()
-        ignoreNextClick.current = true
-        setSelectedReport(report)
-        setModalOpen(false)
-        setPanelOpen(false)
-
-        map.flyTo({
-          center: [report.longitude, report.latitude],
-          zoom: Math.max(map.getZoom(), 15),
-          duration: 800,
+        el.addEventListener("mouseenter", () => {
+          el.style.filter = "brightness(1.25) drop-shadow(0 0 6px rgba(255,255,255,0.35))"
+          el.style.transition = "filter 0.2s ease"
         })
-      })
+        el.addEventListener("mouseleave", () => {
+          el.style.filter = "none"
+        })
 
+        el.addEventListener("click", (e) => {
+          e.stopPropagation()
+          ignoreNextClick.current = true
+          setSelectedReport(report)
+          setModalOpen(false)
+          setPanelOpen(false)
+
+          map.flyTo({
+            center: [report.longitude, report.latitude],
+            zoom: Math.max(map.getZoom(), 15),
+            duration: 800,
+          })
+        })
+      
       const marker = new mapboxgl.Marker({
         element: el,
         anchor: "bottom",
@@ -309,7 +301,7 @@ export function MapContainer() {
         .addTo(map)
 
       markersRef.current.set(report.id, marker)
-    })
+    })})
   }, [reports])
 
   const handleSearchSelect = useCallback((lng: number, lat: number) => {
@@ -318,7 +310,7 @@ export function MapContainer() {
     mapRef.current?.flyTo({ center: [lng, lat], zoom: 16, duration: 1500 })
   }, [])
 
-  // Selecionar denuncia do painel
+  // Selecionar denuncia do pa 
   const handlePanelSelectReport = useCallback((report: Report) => {
     setPanelOpen(false)
     setSelectedReport(report)
@@ -327,6 +319,40 @@ export function MapContainer() {
       zoom: 16,
       duration: 1200,
     })
+  }, [])
+
+  // Exibir denuncias no mapa e enviar denuncias
+  useEffect(() => {
+    async function fetchReportsFromApi() {
+      try {
+        const apiGet = process.env.NEXT_PUBLIC_API_GET
+        if (!apiGet) {
+          throw new Error("API_GET não definida")
+        }
+        const res = await fetch(apiGet)
+        if (!res.ok) throw new Error("Erro ao buscar denúncias")
+
+        const rawData = await res.json()
+
+        const adaptedReports: Report[] = rawData.map(
+          (item: any, index: number) => ({
+            id: String(index),             
+            category: item.tipo,            
+            latitude: item.latitude,
+            longitude: item.longitude,
+            likes: item.votos ?? 0,      
+            description: item.descricao,
+            status: item.status,
+          })
+        )
+
+        setReports(adaptedReports)
+      } catch (err) {
+        console.error("Erro ao buscar denúncias da API:", err)
+      }
+    }
+
+    fetchReportsFromApi()
   }, [])
 
   // Atualizar selectedReport quando reports mudam
@@ -346,7 +372,7 @@ export function MapContainer() {
       <SearchBar onSelect={handleSearchSelect} />
 
       {/* Botoes flutuantes: lista de denuncias e toggle de estilo */}
-      <div className="absolute top-[72px] left-4 z-10 flex flex-col gap-2">
+      <div className="absolute top-72px left-4 z-10 flex flex-col gap-2">
         {/* Botao abrir painel de denuncias */}
         <button
           onClick={() => {
@@ -357,7 +383,7 @@ export function MapContainer() {
           aria-label="Ver denuncias"
           title="Ver todas as denuncias"
         >
-          <List className="size-[18px] text-foreground" />
+          <List className="size-18px text-foreground" />
         </button>
 
         {/* Toggle satelite / relevo */}
@@ -368,9 +394,9 @@ export function MapContainer() {
           title={isSatellite ? "Visualizacao em relevo" : "Visualizacao por satelite"}
         >
           {isSatellite ? (
-            <Mountain className="size-[18px] text-foreground" />
+            <Mountain className="size-18px text-foreground" />
           ) : (
-            <Satellite className="size-[18px] text-foreground" />
+            <Satellite className="size-18px text-foreground" />
           )}
         </button>
       </div>
@@ -470,7 +496,7 @@ export function MapContainer() {
       )}
 
       {/* Legenda de categorias - reposicionada para nao sobrepor no mobile */}
-      <div className="absolute top-[72px] right-4 z-10 md:top-auto md:bottom-6">
+      <div className="absolute top-72px right-4 z-10 md:top-auto md:bottom-6">
         <div className="bg-background/90 backdrop-blur-md border border-border/50 rounded-xl p-3 shadow-lg">
           <p className="text-xs font-semibold text-foreground mb-2">Categorias</p>
           <div className="flex flex-col gap-1.5">

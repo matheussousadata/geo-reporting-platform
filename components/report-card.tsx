@@ -29,7 +29,7 @@ export function ReportCard({ report }: ReportCardProps) {
   const cat = CATEGORIES[report.category]
 
   return (
-    <div className="flex flex-col gap-2 min-w-[240px] max-w-[280px]">
+    <div className="flex flex-col gap-2 min-w-240px max-w-280px">
       <div className="flex items-center gap-2">
         <span
           className="inline-block size-2.5 rounded-full shrink-0"

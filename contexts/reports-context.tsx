@@ -75,23 +75,44 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
   )
 
   const likeReport = useCallback(
-    (id: string) => {
+    async (id: string) => {
       if (likedIds.has(id)) return
 
-      setReports((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, likes: r.likes + 1 } : r))
-      )
-      setLikedIds((prev) => {
-        const next = new Set(prev)
-        next.add(id)
-        try {
-          localStorage.setItem("liked-reports", JSON.stringify([...next]))
-        } catch {
-          // Ignora erros de escrita
+      try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_CURTIDA}/votar/${id}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          )
+
+          if (!res.ok) {
+            throw new Error("Erro ao curtir denúncia")
+          }
+
+          const { likes } = await res.json()
+
+          // atualiza likes com o valor vindo do backend
+          setReports((prev) =>
+            prev.map((r) =>
+              r.id === id ? { ...r, likes } : r
+            )
+          )
+
+          // marca como curtido no front (UX)
+          setLikedIds((prev) => {
+            const next = new Set(prev)
+            next.add(id)
+            localStorage.setItem("liked-reports", JSON.stringify([...next]))
+            return next
+          })
+        } catch (err) {
+          console.error("Erro ao enviar curtida:", err)
         }
-        return next
-      })
-    },
+      },
     [likedIds]
   )
 

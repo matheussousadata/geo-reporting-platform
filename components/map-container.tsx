@@ -118,7 +118,7 @@ export function MapContainer() {
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map())
   const ignoreNextClick = useRef(false)
 
-  const { reports: hookReports } = useReports()
+  const {reports: hookReports } = useReports()
   const [reports, setReports] = useState<Report[]>(hookReports)
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -242,67 +242,70 @@ export function MapContainer() {
 
   // Sincronizar markers com reports
   useEffect(() => {
-    const map = mapRef.current
-    if (!map) return
+  const map = mapRef.current
+  if (!map) return
 
-    const currentIds = new Set(reports.map((r) => r.id))
+  const currentIds = new Set(reports.map((r) => r.id))
 
-    markersRef.current.forEach((marker, id) => {
-      if (!currentIds.has(id)) {
-        marker.remove()
-        markersRef.current.delete(id)
-      }
+  // remove markers antigos
+  markersRef.current.forEach((marker, id) => {
+    if (!currentIds.has(id)) {
+      marker.remove()
+      markersRef.current.delete(id)
+    }
+  })
+
+  reports.forEach((report) => {
+    if (markersRef.current.has(report.id)) return
+
+    const cat = CATEGORIES[report.category]
+
+    if (!cat) {
+      console.warn("Categoria inválida:", report.category)
+      return
+    }
+
+    const el = document.createElement("div")
+    el.className = "report-marker"
+    el.style.width = "30px"
+    el.style.height = "40px"
+    el.style.cursor = "pointer"
+    el.innerHTML = createPinSvg(cat.color)
+
+    el.addEventListener("mouseenter", () => {
+      el.style.filter =
+        "brightness(1.25) drop-shadow(0 0 6px rgba(255,255,255,0.35))"
+      el.style.transition = "filter 0.2s ease"
     })
 
-    reports.forEach((report) => {
-      if (markersRef.current.has(report.id)) return
+    el.addEventListener("mouseleave", () => {
+      el.style.filter = "none"
+    })
 
-      const cat = CATEGORIES[report.category]
+    el.addEventListener("click", (e) => {
+      e.stopPropagation()
+      ignoreNextClick.current = true
+      setSelectedReport(report)
+      setModalOpen(false)
+      setPanelOpen(false)
 
-      if (!cat) {
-        console.warn("Categoria inválida:", report.category)
-      }
-
-      reports.forEach(report => {
-        const el = document.createElement("div")
-        el.className = "report-marker"
-        el.style.width = "30px"
-        el.style.height = "40px"
-        el.style.cursor = "pointer"
-        el.innerHTML = createPinSvg(cat.color)
-
-        el.addEventListener("mouseenter", () => {
-          el.style.filter = "brightness(1.25) drop-shadow(0 0 6px rgba(255,255,255,0.35))"
-          el.style.transition = "filter 0.2s ease"
-        })
-        el.addEventListener("mouseleave", () => {
-          el.style.filter = "none"
-        })
-
-        el.addEventListener("click", (e) => {
-          e.stopPropagation()
-          ignoreNextClick.current = true
-          setSelectedReport(report)
-          setModalOpen(false)
-          setPanelOpen(false)
-
-          map.flyTo({
-            center: [report.longitude, report.latitude],
-            zoom: Math.max(map.getZoom(), 15),
-            duration: 800,
-          })
-        })
-      
-      const marker = new mapboxgl.Marker({
-        element: el,
-        anchor: "bottom",
+      map.flyTo({
+        center: [report.longitude, report.latitude],
+        zoom: Math.max(map.getZoom(), 15),
+        duration: 800,
       })
-        .setLngLat([report.longitude, report.latitude])
-        .addTo(map)
+    })
 
-      markersRef.current.set(report.id, marker)
-    })})
-  }, [reports])
+    const marker = new mapboxgl.Marker({
+      element: el,
+      anchor: "bottom",
+    })
+      .setLngLat([report.longitude, report.latitude])
+      .addTo(map)
+
+    markersRef.current.set(report.id, marker)
+  })
+}, [reports])
 
   const handleSearchSelect = useCallback((lng: number, lat: number) => {
     setSelectedReport(null)
@@ -336,7 +339,7 @@ export function MapContainer() {
 
         const adaptedReports: Report[] = rawData.map(
           (item: any, index: number) => ({
-            id: String(index),             
+            id: item.id,             
             category: item.tipo,            
             latitude: item.latitude,
             longitude: item.longitude,

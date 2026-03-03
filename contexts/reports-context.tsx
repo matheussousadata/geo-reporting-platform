@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import type { Report, ReportCategory } from "@/types/report"
-import { MOCK_REPORTS } from "@/utils/mock-data"
+import { fetchReportsFromApi } from "@/utils/reportsFromApi"
 import { haversineDistance, isInsideBounds } from "@/utils/geo"
 import { CITY_BOUNDS, MIN_REPORT_DISTANCE } from "@/utils/constants"
 
@@ -20,10 +20,9 @@ interface ReportsContextType {
 const ReportsContext = createContext<ReportsContextType | null>(null)
 
 export function ReportsProvider({ children }: { children: React.ReactNode }) {
-  const [reports, setReports] = useState<Report[]>(MOCK_REPORTS)
+  const [reports, setReports] = useState<Report[]>([])
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
 
-  // Carregar likes salvos do localStorage na montagem
   useEffect(() => {
     try {
       const saved = localStorage.getItem("liked-reports")
@@ -31,8 +30,19 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
         setLikedIds(new Set(JSON.parse(saved)))
       }
     } catch {
-      // Ignora erros de parsing
+      
     }
+  }, [])
+
+  useEffect(() => {
+    async function loadReports() {
+      const fetchedReports = await fetchReportsFromApi()
+      if (fetchedReports.length > 0) {
+        setReports(fetchedReports) 
+      }
+    }
+
+    loadReports()
   }, [])
 
   const addReport = useCallback(

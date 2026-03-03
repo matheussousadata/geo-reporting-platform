@@ -375,7 +375,7 @@ export function MapContainer() {
       <SearchBar onSelect={handleSearchSelect} />
 
       {/* Botoes flutuantes: lista de denuncias e toggle de estilo */}
-      <div className="absolute top-72px left-4 z-10 flex flex-col gap-2">
+      <div className="absolute top-72 left-4 z-10 flex flex-col gap-2">
         {/* Botao abrir painel de denuncias */}
         <button
           onClick={() => {

@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { X, ChevronRight, MapPin, ThumbsUp, List, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { X, ChevronRight, MapPin, ThumbsUp, List, Loader2 } from "lucide-react" 
 import { useReports } from "@/contexts/reports-context"
 import { CATEGORIES } from "@/types/report"
 import type { Report } from "@/types/report"
@@ -80,6 +79,7 @@ export function ReportsPanel({ open, onClose, onSelectReport }: ReportsPanelProp
   return (
     <div className="absolute inset-y-0 left-0 z-20 w-full max-w-sm animate-in slide-in-from-left duration-300">
       <div className="h-full bg-background/95 backdrop-blur-xl border-r border-border/50 shadow-2xl flex flex-col">
+      
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border/50">
           <div className="flex items-center gap-2">
@@ -164,11 +164,8 @@ export function ReportsPanel({ open, onClose, onSelectReport }: ReportsPanelProp
                     const liked = hasLiked(report.id)
 
                     return (
-                      <button
-                        key={report.id}
-                        onClick={() => onSelectReport(report)}
-                        className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-accent/40 transition-colors border-b border-border/15"
-                      >
+                      <div key={report.id} onClick={() => onSelectReport(report)} 
+                      className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-accent/40 transition-colors border-b border-border/15">
                         {/* Indicador de cor */}
                         <div className="shrink-0 mt-1">
                           <span
@@ -212,7 +209,7 @@ export function ReportsPanel({ open, onClose, onSelectReport }: ReportsPanelProp
                         <div className="shrink-0 flex items-center justify-center mt-2">
                           <ChevronRight className="size-4 text-muted-foreground/50" />
                         </div>
-                      </button>
+                      </div>
                     )
                   })}
                 </div>

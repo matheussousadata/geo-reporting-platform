@@ -9,7 +9,7 @@ export const CITY_BOUNDS: [[number, number], [number, number]] = [
 export const CITY_CENTER: [number, number] = [-42.6440, -5.4150]
 
 // Zoom padrao
-export const DEFAULT_ZOOM = 13
+export const DEFAULT_ZOOM = 14
 
 // Raio minimo entre denuncias (em metros)
 export const MIN_REPORT_DISTANCE = 20

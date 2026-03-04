@@ -3,38 +3,20 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog" 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CATEGORIES, type ReportCategory } from "@/types/report"
 import { useReports } from "@/contexts/reports-context"
 import { MapPin } from "lucide-react"
+import { createReport } from "@/utils/reportsFromApi"
 
 const reportSchema = z.object({
-  title: z
-    .string()
-    .min(5, "Titulo deve ter pelo menos 5 caracteres")
-    .max(80, "Titulo deve ter no maximo 80 caracteres"),
-  description: z
-    .string()
-    .min(10, "Descricao deve ter pelo menos 10 caracteres")
-    .max(300, "Descricao deve ter no maximo 300 caracteres"),
+  title: z.string().min(5, "Titulo deve ter pelo menos 5 caracteres").max(80, "Titulo deve ter no maximo 80 caracteres"),
+  description: z.string().min(10, "Descricao deve ter pelo menos 10 caracteres").max(300, "Descricao deve ter no maximo 300 caracteres"),
   category: z.string().min(1, "Selecione uma categoria"),
 })
 
@@ -48,23 +30,10 @@ interface ReportModalProps {
   onError: (message: string) => void
 }
 
-export function ReportModal({
-  open,
-  onOpenChange,
-  coordinates,
-  onSuccess,
-  onError,
-}: ReportModalProps) {
+export function ReportModal({ open, onOpenChange, coordinates, onSuccess, onError }: ReportModalProps) {
   const { addReport } = useReports()
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    reset,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<ReportFormData>({
+  const { register, handleSubmit, setValue, reset, watch, formState: { errors, isSubmitting } } = useForm<ReportFormData>({
     resolver: zodResolver(reportSchema),
     defaultValues: {
       title: "",
@@ -79,35 +48,22 @@ export function ReportModal({
   const onSubmit = async (data: ReportFormData) => {
     if (!coordinates) return
 
-    const { lat, lng } = coordinates
-
-    const apiPost = process.env.NEXT_PUBLIC_API_POST
-    if (!apiPost) {
-      throw new Error("API_POST não definida")
-    }
+    const { lat, lng } = coordinates 
 
     try {
-      const res = await fetch(apiPost, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        await createReport({
           tipo: data.category,
           descricao: data.description,
           latitude: lat,
           longitude: lng,
           imagem: [],
           status: "novo",
-        }),
-      })
-
-      const result = await res.json()
-      alert(result.message ?? 'Denúncia enviada!')
-
+      }) 
+      alert('Denúncia enviada!')
       handleClose(false)
       reset()
     } catch (err) {
-      alert('Erro ao enviar denúncia')
-      console.error(err)
+      alert('Erro ao enviar denúncia') 
     }
   }
 
@@ -139,8 +95,7 @@ export function ReportModal({
           <div className="flex flex-col gap-2">
             <Label htmlFor="category">Categoria</Label>
             <Select
-              onValueChange={(val) => setValue("category", val, { shouldValidate: true })}
-            >
+              onValueChange={(val) => setValue("category", val, { shouldValidate: true })}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>

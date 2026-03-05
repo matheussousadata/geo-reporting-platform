@@ -14,7 +14,11 @@ export async function fetchReportsFromApi(): Promise<Report[]> {
     const apiGet = process.env.NEXT_PUBLIC_API_GET
     if (!apiGet) throw new Error("API_GET não definida")
 
-    const res = await fetch(apiGet)
+    const res = await fetch(apiGet, {
+      headers: {
+        "ngrok-skip-browser-warning": "true"
+      }
+    })
     if (!res.ok) throw new Error("Erro ao buscar denúncias")
 
     const rawData = await res.json()
@@ -46,7 +50,7 @@ export async function createReport(data: CreateReportPayload) {
   const response = await fetch(apiPost, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true"
     },
     body: JSON.stringify(data),
   })

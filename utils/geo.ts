@@ -8,7 +8,7 @@ export function haversineDistance(
   lat2: number,
   lng2: number
 ): number {
-  const R = 6371000 // Raio da Terra em metros
+  const R = 6371000 
   const dLat = toRad(lat2 - lat1)
   const dLng = toRad(lng2 - lng1)
   const a =

@@ -230,7 +230,9 @@ export function MapContainer() {
           mapRef.current.flyTo({ center: [longitude, latitude], zoom: 15 })
         }
       },
-      () => {}
+      (error) => {
+        console.log("ERRO GEO:", error.code, error.message)
+      }
     )
   }, [])
 

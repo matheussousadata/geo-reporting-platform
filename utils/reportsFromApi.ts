@@ -50,7 +50,7 @@ export async function createReport(data: CreateReportPayload) {
   const response = await fetch(apiPost, {
     method: "POST",
     headers: {
-      "ngrok-skip-browser-warning": "true"
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
   })

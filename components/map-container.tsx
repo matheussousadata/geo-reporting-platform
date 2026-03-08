@@ -118,8 +118,7 @@ export function MapContainer() {
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map())
   const ignoreNextClick = useRef(false) 
-  const {reports: hookReports } = useReports()
-  const [reports, setReports] = useState<Report[]>(hookReports) 
+  const { reports } = useReports()
   const [modalOpen, setModalOpen] = useState(false) 
   const [clickCoords, setClickCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
@@ -322,21 +321,7 @@ export function MapContainer() {
       zoom: 16,
       duration: 1200,
     })
-  }, [])
-
-  // Exibir denuncias no mapa e enviar denuncias
-useEffect(() => {
-  async function loadReports() {
-    try {
-      const reports = await fetchReportsFromApi()
-      setReports(reports)
-    } catch (err) {
-      console.error("Erro ao buscar denúncias:", err)
-    }
-  }
-
-  loadReports()
-}, [])
+  }, []) 
 
   // Atualizar selectedReport quando reports mudam
   useEffect(() => {

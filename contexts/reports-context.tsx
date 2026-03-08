@@ -1,21 +1,22 @@
 "use client"
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
-import type { Report, ReportCategory } from "@/types/report"
-import { fetchReportsFromApi } from "@/utils/reportsFromApi"
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo  } from "react"
+import type { Report, CreateReportPayload, ReportCategory } from "@/types/report"
+import { fetchReportsFromApi, likeReportRequest, createReport } from "@/utils/reportsFromApi"
 import { haversineDistance, isInsideBounds } from "@/utils/geo"
 import { CITY_BOUNDS, MIN_REPORT_DISTANCE } from "@/utils/constants"
-import { likeReportRequest } from "@/utils/reportsFromApi"
+import socket from "@/utils/socket";
 
 interface ReportsContextType {
   reports: Report[]
   addReport: (
-    data: { title: string; description: string; category: ReportCategory },
+    data: Omit<CreateReportPayload, "latitude" | "longitude">,
     lat: number,
     lng: number
-  ) => { success: boolean; error?: string }
+  ) => Promise<{ success: boolean; error?: string }>
   likeReport: (id: string) => void
   hasLiked: (id: string) => boolean
+  totalLikes: number
 }
 
 const ReportsContext = createContext<ReportsContextType | null>(null)
@@ -23,6 +24,44 @@ const ReportsContext = createContext<ReportsContextType | null>(null)
 export function ReportsProvider({ children }: { children: React.ReactNode }) {
   const [reports, setReports] = useState<Report[]>([])
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
+
+  const totalLikes = useMemo(() => reports.reduce((sum, r) => sum + r.likes, 0), [reports])
+
+  useEffect(() => {
+    socket.on("novaDenuncia", (apiReport) => {
+
+      const report: Report = {
+        id: apiReport.id,
+        title: apiReport.descricao ?? "",
+        description: apiReport.descricao,
+        category: apiReport.tipo,
+        latitude: Number(apiReport.latitude),
+        longitude: Number(apiReport.longitude),
+        likes: apiReport.votos ?? 0,
+        createdAt: apiReport.createdAt ?? new Date().toISOString()
+      }
+      if (isNaN(report.latitude) || isNaN(report.longitude)) {
+        console.warn("Coordenadas inválidas:", apiReport)
+        return
+      }
+      setReports((prev) => {
+        if (prev.some(r => r.id === report.id)) return prev
+        return [report, ...prev]
+      })
+    })
+
+    socket.on("denunciaAtualizada", ({ id, votos }) => {
+      setReports((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, likes: votos } : r
+        )
+      )
+    })
+    return () => {
+      socket.off("novaDenuncia")
+      socket.off("denunciaAtualizada")
+    }
+  }, [])
 
   useEffect(() => {
     try {
@@ -46,56 +85,58 @@ export function ReportsProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const addReport = useCallback(
-    (
-      data: { title: string; description: string; category: ReportCategory },
+    async (
+      data: Omit<CreateReportPayload, "latitude" | "longitude">,
       lat: number,
       lng: number
-    ): { success: boolean; error?: string } => {
-      // Verificar se esta dentro dos limites
+    ) => { 
       if (!isInsideBounds(lat, lng, CITY_BOUNDS)) {
-        return { success: false, error: "Local fora dos limites da cidade." }
-      }
-
-      // Verificar proximidade com outros markers (20m)
+        return {
+          success: false,
+          error: "Local fora dos limites da cidade."
+        }
+      } 
       const tooClose = reports.some(
-        (r) => haversineDistance(r.latitude, r.longitude, lat, lng) < MIN_REPORT_DISTANCE
+        (r) =>
+          haversineDistance(
+            r.latitude,
+            r.longitude,
+            lat,
+            lng
+          ) < MIN_REPORT_DISTANCE
       )
       if (tooClose) {
         return {
           success: false,
-          error: "Ja existe uma denuncia muito proxima deste local.",
+          error: "Já existe uma denúncia muito próxima deste local."
         }
       }
-
-      const newReport: Report = {
-        id: crypto.randomUUID(),
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        latitude: lat,
-        longitude: lng,
-        likes: 0,
-        createdAt: new Date().toISOString(),
+      try {
+        await createReport({
+            tipo: data.category,
+            descricao: data.description,
+            latitude: lat,
+            longitude: lng,
+            imagem: [],
+            status: "pendente"
+        })
+        return { success: true }
+      } catch (err) {
+        console.error("Erro ao criar denúncia:", err)
+        return {
+          success: false,
+          error: "Erro ao enviar denúncia."
+        }
       }
-
-      setReports((prev) => [newReport, ...prev])
-      return { success: true }
     },
     [reports]
   )
 
-const likeReport = useCallback(
-  async (id: string) => {
+  const likeReport = useCallback(async (id: string) => {
     if (likedIds.has(id)) return
 
     try {
-      const { likes } = await likeReportRequest(id)
-
-      setReports((prev) =>
-        prev.map((r) =>
-          r.id === id ? { ...r, likes } : r
-        )
-      )
+      await likeReportRequest(id)
 
       setLikedIds((prev) => {
         const next = new Set(prev)
@@ -107,17 +148,12 @@ const likeReport = useCallback(
     } catch (err) {
       console.error("Erro ao enviar curtida:", err)
     }
-  },
-  [likedIds]
-)
+  }, [likedIds])
 
-  const hasLiked = useCallback(
-    (id: string) => likedIds.has(id),
-    [likedIds]
-  )
+  const hasLiked = useCallback((id: string) => likedIds.has(id), [likedIds])
 
   return (
-    <ReportsContext.Provider value={{ reports, addReport, likeReport, hasLiked }}>
+    <ReportsContext.Provider value={{ reports, addReport, likeReport, hasLiked, totalLikes }}>
       {children}
     </ReportsContext.Provider>
   )

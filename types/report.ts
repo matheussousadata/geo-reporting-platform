@@ -9,6 +9,14 @@ export interface Report {
   createdAt: string
 }
 
+export interface CreateReportPayload {
+  title: string
+  description: string
+  category: ReportCategory
+  latitude: number
+  longitude: number
+}
+
 export type ReportCategory =
   | "infraestrutura"
   | "iluminacao"
